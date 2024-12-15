@@ -1,24 +1,20 @@
 import os
-
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 
 
-# Nama Program
 def nama_program():
     print("\n====================================")
     print("PROGRAM: KELOMPOK 1")
     print("Mengamankan Data Pribadi dengan SHA3 dan Kunci Privat ECDSA")
     print("====================================\n")
 
-
 def menu_program():
     print("Menu:")
     print("1. Input Data Pribadi")
     print("2. Verifikasi Data")
     print("3. Batal")
-
 
 def input_data():
     data = {}
@@ -29,14 +25,12 @@ def input_data():
     data["gender"] = input("Masukkan Gender: ")
     return data
 
-
 def crud_menu():
     print("\nData telah diinput:")
     print("1. Lihat Data")
     print("2. Ubah Data")
     print("3. Hapus Data")
     print("4. Lanjutkan ke Enkripsi")
-
 
 def generate_signature(data):
     private_key = ec.generate_private_key(ec.SECP256R1())
@@ -53,45 +47,49 @@ def generate_signature(data):
     # Generate digital signature
     signature = private_key.sign(hashed_data, ec.ECDSA(hashes.SHA3_512()))
 
-    # Convert public key to PEM format
+    # Save public key to PEM file
     public_key_pem = public_key.public_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo,
-    ).decode("utf-8")
+    )
+    with open("public_key.pem", "wb") as f:
+        f.write(public_key_pem)
 
-    # Convert private key to PEM format
-    private_key_pem = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption(),
-    ).decode("utf-8")
+    # Save hashed data to text file
+    with open("hashed_data.txt", "w") as f:
+        f.write(hashed_data.hex())
 
-    # Save public key to .pem file
-    with open("public_key.pem", "w") as pub_file:
-        pub_file.write(public_key_pem)
+    # Save signature to text file
+    with open("signature.txt", "w") as f:
+        f.write(signature.hex())
 
-    # Save hash and private key to .txt file
-    with open("hashed_data_and_private_key.txt", "w") as priv_file:
-        priv_file.write("Data yang di-hash (SHA3-512):\n")
-        priv_file.write(hashed_data.hex() + "\n\n")
-        priv_file.write("Kunci Privat (PEM):\n")
-        priv_file.write(private_key_pem)
+    print("\nData berhasil dienkripsi dan disimpan ke file:\n")
+    print("- public_key.pem (Kunci Publik)")
+    print("- hashed_data.txt (Hash Data)")
+    print("- signature.txt (Tanda Tangan Digital)")
 
-    return hashed_data, private_key
+    return hashed_data, signature, public_key_pem
 
-
-def verify_data(hashed_data, private_key):
+def verify_data():
     try:
-        input_hash = bytes.fromhex(input("Masukkan Hash (SHA3-512): "))
-        input_signature = bytes.fromhex(input("Masukkan Tanda Tangan Digital: "))
-        public_key = private_key.public_key()
-        public_key.verify(input_signature, input_hash, ec.ECDSA(hashes.SHA3_512()))
-        print("\nData valid! Hash dan tanda tangan cocok.\n")
-    except (ValueError, InvalidSignature):
-        print(
-            "\nLog error: Kunci yang Anda berikan salah atau hash/private key tidak cocok.\n"
-        )
+        # Load public key from PEM file
+        with open("public_key.pem", "rb") as f:
+            public_key = serialization.load_pem_public_key(f.read())
 
+        # Load hashed data and signature from files
+        with open("hashed_data.txt", "r") as f:
+            hashed_data = bytes.fromhex(f.read().strip())
+
+        with open("signature.txt", "r") as f:
+            signature = bytes.fromhex(f.read().strip())
+
+        # Verify signature
+        public_key.verify(signature, hashed_data, ec.ECDSA(hashes.SHA3_512()))
+        print("\nData valid! Hash dan tanda tangan cocok.\n")
+    except FileNotFoundError:
+        print("\nError: File tidak ditemukan. Pastikan semua file tersedia di direktori.\n")
+    except (ValueError, InvalidSignature):
+        print("\nError: Data tidak valid. Hash atau tanda tangan tidak cocok.\n")
 
 # Program Utama
 if __name__ == "__main__":
@@ -118,20 +116,14 @@ if __name__ == "__main__":
                     print("\nData dihapus.")
                     data = {}
                 elif crud_pilihan == "4":
-                    hashed_data, private_key = generate_signature(data)
-                    print(
-                        "\nData terenkripsi dan disimpan dalam file public_key.pem dan hashed_data_and_private_key.txt\n"
-                    )
+                    generate_signature(data)
                     break
                 else:
                     print("Pilihan tidak valid.")
 
         elif pilihan == "2":
             print("\nVerifikasi Data:")
-            if "hashed_data" in locals() and "private_key" in locals():
-                verify_data(hashed_data, private_key)
-            else:
-                print("\nData belum terenkripsi. Silakan input data terlebih dahulu.\n")
+            verify_data()
 
         elif pilihan == "3":
             print("Program dibatalkan.")
