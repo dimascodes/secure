@@ -13,18 +13,28 @@ def read_files():
     try:
         # Baca file public key
         with open("public_key.pem", "r") as pub_file:
-            public_key_pem = pub_file.read()
+            public_key_pem = pub_file.read().strip()  # Hilangkan newline atau spasi ekstra
 
         # Baca file hash dan tanda tangan digital
         with open("hashed_data_and_private_key.txt", "r") as hash_file:
             lines = hash_file.readlines()
             received_hash = lines[1].strip()  # Baris kedua adalah hash
-            signature = lines[5].strip()  # Baris keempat adalah tanda tangan digital
+            signature = lines[3].strip()      # Baris keempat adalah tanda tangan digital
+
+        # Pastikan format hash dan signature adalah heksadesimal
+        if not all(c in "0123456789abcdefABCDEF" for c in received_hash):
+            raise ValueError("Hash bukan format heksadesimal!")
+        if not all(c in "0123456789abcdefABCDEF" for c in signature):
+            raise ValueError("Tanda tangan bukan format heksadesimal!")
 
         return public_key_pem, received_hash, signature
     except FileNotFoundError as e:
         print(f"File tidak ditemukan: {e}")
         return None, None, None
+    except ValueError as e:
+        print(f"Kesalahan format: {e}")
+        return None, None, None
+
 
 
 def verify_signature(data, received_hash, signature, public_key_pem):
