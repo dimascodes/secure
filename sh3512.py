@@ -1,4 +1,5 @@
 import os
+
 from OpenSSL import crypto
 
 
@@ -36,19 +37,19 @@ def crud_menu():
 
 
 def generate_signature(data):
-    # Generate key pair (private and public)
+    # Generate key pair (private and public) with elliptic curve
     key = crypto.PKey()
-    key.generate_key(crypto.TYPE_EC, crypto.ECCurve.NID_X9_62_prime256v1)
+    key.generate_key(crypto.TYPE_EC, 713)  # 713 adalah NID untuk kurva SECP256R1
 
     # Extract private and public keys
     private_key = key
     public_key = key.public_key()
 
-    # Serialize keys
+    # Serialize keys to PEM format
     private_key_pem = crypto.dump_privatekey(crypto.FILETYPE_PEM, private_key)
     public_key_pem = crypto.dump_publickey(crypto.FILETYPE_PEM, public_key)
 
-    # Prepare the data string and hash it
+    # Prepare the data string and hash it using SHA3-512
     data_str = f"{data['nama']}|{data['nik']}|{data['tanggal_lahir']}|{data['alamat']}|{data['gender']}"
     data_bytes = data_str.encode("utf-8")
 
