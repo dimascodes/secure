@@ -53,20 +53,29 @@ def generate_signature(data):
     # Generate digital signature
     signature = private_key.sign(hashed_data, ec.ECDSA(hashes.SHA3_512()))
 
-    # Convert public key to PEM format using serialization
+    # Convert public key to PEM format
     public_key_pem = public_key.public_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo,
     ).decode("utf-8")
 
-    # Save to file
-    with open("output_data.txt", "w") as f:
-        f.write("Data yang di-hash (SHA3-512):\n")
-        f.write(hashed_data.hex() + "\n\n")
-        f.write("Tanda tangan digital (ECDSA):\n")
-        f.write(signature.hex() + "\n\n")
-        f.write("Kunci Publik:\n")
-        f.write(public_key_pem)
+    # Convert private key to PEM format
+    private_key_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    ).decode("utf-8")
+
+    # Save public key to .pem file
+    with open("public_key.pem", "w") as pub_file:
+        pub_file.write(public_key_pem)
+
+    # Save hash and private key to .txt file
+    with open("hashed_data_and_private_key.txt", "w") as priv_file:
+        priv_file.write("Data yang di-hash (SHA3-512):\n")
+        priv_file.write(hashed_data.hex() + "\n\n")
+        priv_file.write("Kunci Privat (PEM):\n")
+        priv_file.write(private_key_pem)
 
     return hashed_data, private_key
 
@@ -110,7 +119,9 @@ if __name__ == "__main__":
                     data = {}
                 elif crud_pilihan == "4":
                     hashed_data, private_key = generate_signature(data)
-                    print("\nData terenkripsi dan disimpan di file output_data.txt\n")
+                    print(
+                        "\nData terenkripsi dan disimpan dalam file public_key.pem dan hashed_data_and_private_key.txt\n"
+                    )
                     break
                 else:
                     print("Pilihan tidak valid.")
