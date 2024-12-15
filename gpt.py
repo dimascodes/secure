@@ -1,7 +1,7 @@
 import os
 
 from cryptography.exceptions import InvalidSignature
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 
 
@@ -53,6 +53,12 @@ def generate_signature(data):
     # Generate digital signature
     signature = private_key.sign(hashed_data, ec.ECDSA(hashes.SHA3_512()))
 
+    # Convert public key to PEM format using serialization
+    public_key_pem = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    ).decode("utf-8")
+
     # Save to file
     with open("output_data.txt", "w") as f:
         f.write("Data yang di-hash (SHA3-512):\n")
@@ -60,11 +66,7 @@ def generate_signature(data):
         f.write("Tanda tangan digital (ECDSA):\n")
         f.write(signature.hex() + "\n\n")
         f.write("Kunci Publik:\n")
-        f.write(
-            public_key.public_bytes(
-                encoding=ec.Encoding.PEM, format=ec.PublicFormat.SubjectPublicKeyInfo
-            ).decode("utf-8")
-        )
+        f.write(public_key_pem)
 
     return hashed_data, private_key
 
