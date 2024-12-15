@@ -68,32 +68,20 @@ def generate_signature(data):
         f.write("Kunci Publik:\n")
         f.write(public_key_pem)
 
-    return hashed_data, private_key, public_key_pem
+    return hashed_data, private_key
 
 
-def verify_data():
+def verify_data(hashed_data, private_key):
     try:
-        input_public_key_pem = input("Masukkan Kunci Publik (PEM): ").encode("utf-8")
-        input_signature = bytes.fromhex(input("Masukkan Tanda Tangan Digital: "))
         input_hash = bytes.fromhex(input("Masukkan Hash (SHA3-512): "))
-
-        # Load public key from PEM
-        public_key = serialization.load_pem_public_key(input_public_key_pem)
-
-        # Verify signature
+        input_signature = bytes.fromhex(input("Masukkan Tanda Tangan Digital: "))
+        public_key = private_key.public_key()
         public_key.verify(input_signature, input_hash, ec.ECDSA(hashes.SHA3_512()))
-        print("\nData valid! Hash dan tanda tangan cocok.")
-
-        # Decode hash to simulate original data (for demonstration only)
-        print(
-            "\nDekripsi tidak dapat mengembalikan data asli karena hash bersifat satu arah."
-        )
-        print(
-            "Namun, data asli dapat disediakan jika proses hashing dan tanda tangan dilakukan ulang."
-        )
-
+        print("\nData valid! Hash dan tanda tangan cocok.\n")
     except (ValueError, InvalidSignature):
-        print("\nLog error: Kunci publik, tanda tangan, atau hash tidak cocok.")
+        print(
+            "\nLog error: Kunci yang Anda berikan salah atau hash/private key tidak cocok.\n"
+        )
 
 
 # Program Utama
@@ -121,7 +109,7 @@ if __name__ == "__main__":
                     print("\nData dihapus.")
                     data = {}
                 elif crud_pilihan == "4":
-                    hashed_data, private_key, public_key_pem = generate_signature(data)
+                    hashed_data, private_key = generate_signature(data)
                     print("\nData terenkripsi dan disimpan di file output_data.txt\n")
                     break
                 else:
@@ -129,7 +117,10 @@ if __name__ == "__main__":
 
         elif pilihan == "2":
             print("\nVerifikasi Data:")
-            verify_data()
+            if "hashed_data" in locals() and "private_key" in locals():
+                verify_data(hashed_data, private_key)
+            else:
+                print("\nData belum terenkripsi. Silakan input data terlebih dahulu.\n")
 
         elif pilihan == "3":
             print("Program dibatalkan.")
